@@ -43,12 +43,28 @@ jobs:
               return;
             }
 
-            // ── парсинг цитаты + даты ──
+            // ── парсинг цитаты + даты + картинок ──
             function parseQuote(raw) {
               const lines = raw.split('\n');
 
               const tgHeader = /^(.+),\s*\[(\d{2})\.(\d{2})\.(\d{4})\s+\d{2}:\d{2}\]$/;
               const altTgLine = /^\[(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+\d{1,2}:\d{2}(?:\s*[AP]M)?\]\s+(.+?):\s+([\s\S]*)$/i;
+              const imgPattern = /(?:<img[^>]+src=["'](https?:\/\/[^\s"']+)["'][^>]*\/?>|!\[.*?\]\((https?:\/\/[^\s)]+)\))/i;
+
+              function extractImage(line) {
+                const m = line.match(imgPattern);
+                return m ? (m[1] || m[2]) : null;
+              }
+
+              function addImage(msg, url) {
+                if (!msg.image) {
+                  msg.image = url;
+                } else if (Array.isArray(msg.image)) {
+                  msg.image.push(url);
+                } else {
+                  msg.image = [msg.image, url];
+                }
+              }
 
               let parsedDate = null;
 
@@ -58,32 +74,48 @@ jobs:
                 const msgs = [];
                 let from = null;
                 let textLines = [];
+                let images = [];
+
+                function pushMsg() {
+                  if (from && (textLines.length || images.length)) {
+                    const msg = { from };
+                    const text = textLines.join('\n').trim();
+                    if (text) msg.text = text;
+                    if (images.length === 1) msg.image = images[0];
+                    else if (images.length > 1) msg.image = images;
+                    msgs.push(msg);
+                  }
+                }
 
                 for (const line of lines) {
                   const trimmed = line.trim();
                   const m = trimmed.match(tgHeader);
 
                   if (m) {
-                    if (from && textLines.length) {
-                      msgs.push({ from, text: textLines.join('\n').trim() });
-                    }
+                    pushMsg();
                     from = m[1].trim();
                     textLines = [];
+                    images = [];
 
                     if (!parsedDate) {
                       parsedDate = `${m[4]}-${m[3]}-${m[2]}`;
                     }
                   } else if (from) {
-                    textLines.push(trimmed);
+                    const img = extractImage(trimmed);
+                    if (img) {
+                      images.push(img);
+                    } else if (trimmed) {
+                      textLines.push(trimmed);
+                    }
                   }
                 }
-                if (from && textLines.length) {
-                  msgs.push({ from, text: textLines.join('\n').trim() });
-                }
+                pushMsg();
 
-                const filtered = msgs.filter(m => m.text);
+                const filtered = msgs.filter(m => m.text || m.image);
                 if (filtered.length === 0) return { quote: raw, date: parsedDate };
-                if (filtered.length === 1) return { quote: filtered[0].text, date: parsedDate };
+                if (filtered.length === 1 && filtered[0].text && !filtered[0].image) {
+                  return { quote: filtered[0].text, date: parsedDate };
+                }
                 return { quote: filtered, date: parsedDate };
               }
 
@@ -107,18 +139,25 @@ jobs:
                       if (year.length === 2) year = '20' + year;
                       parsedDate = `${year}-${month}-${day}`;
                     }
-                  } else if (msgs.length > 0) {
-                    msgs[msgs.length - 1].text += '\n' + trimmed;
+                  } else {
+                    const img = extractImage(trimmed);
+                    if (img && msgs.length > 0) {
+                      addImage(msgs[msgs.length - 1], img);
+                    } else if (msgs.length > 0) {
+                      msgs[msgs.length - 1].text += '\n' + trimmed;
+                    }
                   }
                 }
 
-                const filtered = msgs.filter(m => m.text);
+                const filtered = msgs.filter(m => m.text || m.image);
                 if (filtered.length === 0) return { quote: raw, date: parsedDate };
-                if (filtered.length === 1) return { quote: filtered[0].text, date: parsedDate };
+                if (filtered.length === 1 && filtered[0].text && !filtered[0].image) {
+                  return { quote: filtered[0].text, date: parsedDate };
+                }
                 return { quote: filtered, date: parsedDate };
               }
 
-              // ── Формат: "@username: text" ──
+              // ── @username: text ──
               const dialogPattern = /^@[\w]+:\s*.+$/;
               const nonEmpty = lines.map(l => l.trim()).filter(Boolean);
 
@@ -133,14 +172,27 @@ jobs:
                 return { quote: result, date: null };
               }
 
-              // ── Несколько строк → массив ──
-              if (nonEmpty.length > 1) return { quote: nonEmpty, date: null };
+              // ── Простой текст, проверяем картинки ──
+              const standaloneImages = [];
+              const textOnly = [];
+              for (const line of nonEmpty) {
+                const img = extractImage(line);
+                if (img) standaloneImages.push(img);
+                else textOnly.push(line);
+              }
 
-              // ── Одна строка ──
-              return { quote: nonEmpty[0] || raw, date: null };
+              let quote;
+              if (textOnly.length > 1) quote = textOnly;
+              else quote = textOnly[0] || raw;
+
+              return {
+                quote,
+                date: null,
+                images: standaloneImages.length ? standaloneImages : null
+              };
             }
 
-            const { quote: parsedQuote, date: parsedDate } = parseQuote(quoteRaw);
+            const { quote: parsedQuote, date: parsedDate, images } = parseQuote(quoteRaw);
 
             // ── аватарка ──
             const clean = telegram.replace(/^@/, '');
@@ -193,6 +245,8 @@ jobs:
               telegram: telegram.startsWith('@') ? telegram : `@${telegram}`,
             };
             if (description) newEntry.description = description;
+            if (images && images.length === 1) newEntry.images = images[0];
+            else if (images && images.length > 1) newEntry.images = images;
             newEntry.quote = parsedQuote;
             newEntry.date = parsedDate || new Date().toISOString().split('T')[0];
             newEntry.evidence = evidence || '';

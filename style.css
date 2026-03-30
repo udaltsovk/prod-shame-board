@@ -331,6 +331,29 @@ main {
   line-height: 1.5;
 }
 
+/* --- Images (standalone, outside dialog) --- */
+.entry-images {
+  padding: 14px 22px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.entry-images img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  object-fit: contain;
+}
+
+.entry-images img:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
 /* --- Quote block --- */
 .entry-quote {
   margin: 14px 22px;
@@ -381,6 +404,29 @@ main {
 
 .quote-msg-text {
   color: #ddd;
+}
+
+/* --- Images inside dialog messages --- */
+.quote-msg-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.quote-msg-images img {
+  max-width: 100%;
+  max-height: 250px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  object-fit: contain;
+}
+
+.quote-msg-images img:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 /* --- Footer --- */
@@ -460,6 +506,12 @@ footer {
   .entry-desc {
     padding: 12px 16px 0;
   }
+  .entry-images {
+    padding: 12px 16px 0;
+  }
+  .entry-images img {
+    max-height: 200px;
+  }
   .entry-quote {
     margin: 12px 16px;
     padding: 14px 16px;
@@ -472,5 +524,8 @@ footer {
     width: 36px;
     height: 36px;
     font-size: 0.85em;
+  }
+  .quote-msg-images img {
+    max-height: 180px;
   }
 }

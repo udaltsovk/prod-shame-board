@@ -39,7 +39,7 @@
     return palette[hash(name) % palette.length];
   }
 
-  /* ── XSS-безопасное экранирование ── */
+  /* ── XSS ── */
   function esc(s) {
     const d = document.createElement("div");
     d.textContent = s;
@@ -74,6 +74,38 @@
             </div>`;
   }
 
+  /* ── рендер картинок сообщения ── */
+  function renderMsgImages(image) {
+    if (!image) return "";
+    const urls = Array.isArray(image) ? image : [image];
+    return `
+            <div class="quote-msg-images">
+                ${urls
+                  .map(
+                    (url) =>
+                      `<img src="${esc(url)}" alt="" loading="lazy"
+                          onclick="window.open(this.src,'_blank')">`,
+                  )
+                  .join("")}
+            </div>`;
+  }
+
+  /* ── рендер отдельного блока картинок (вне диалога) ── */
+  function renderImages(images) {
+    if (!images) return "";
+    const list = Array.isArray(images) ? images : [images];
+    return `
+            <div class="entry-images">
+                ${list
+                  .map(
+                    (url) =>
+                      `<img src="${esc(url)}" alt="" loading="lazy"
+                          onclick="window.open(this.src,'_blank')">`,
+                  )
+                  .join("")}
+            </div>`;
+  }
+
   /* ── рендер цитаты (три формата) ── */
   function renderQuote(quote) {
     /* Формат 1: строка */
@@ -88,14 +120,21 @@
         .join("");
     }
 
-    /* Формат 3: диалог — массив {from, text} */
+    /* Формат 3: диалог — массив {from, text, image} */
     return quote
       .map((msg) => {
         const color = colorFor(msg.from);
+        const authorHTML = `<span class="quote-msg-author" style="color:${color}">${esc(msg.from)}</span>`;
+        const imagesHTML = renderMsgImages(msg.image);
+        const textHTML = msg.text
+          ? `<span class="quote-msg-text">${escNl(msg.text)}</span>`
+          : "";
+
         return `
                 <div class="quote-msg">
-                    <span class="quote-msg-author" style="color:${color}">${esc(msg.from)}</span>
-                    <span class="quote-msg-text">${escNl(msg.text)}</span>
+                    ${authorHTML}
+                    ${imagesHTML}
+                    ${textHTML}
                 </div>`;
       })
       .join("");
@@ -109,7 +148,7 @@
     return quote.some((item) =>
       typeof item === "string"
         ? item.toLowerCase().includes(q)
-        : item.text.toLowerCase().includes(q) ||
+        : (item.text || "").toLowerCase().includes(q) ||
           item.from.toLowerCase().includes(q),
     );
   }
@@ -140,6 +179,8 @@
           ? `<div class="entry-desc">${esc(entry.description)}</div>`
           : "";
 
+        const imagesHTML = renderImages(entry.images);
+
         const evidenceHTML = entry.evidence
           ? `<a href="${esc(entry.evidence)}" target="_blank" class="entry-evidence">📎 пруф</a>`
           : "";
@@ -151,6 +192,7 @@
                         ${usernameHTML(entry.telegram)}
                     </div>
                     ${descHTML}
+                    ${imagesHTML}
                     <div class="entry-quote">${renderQuote(entry.quote)}</div>
                     <div class="entry-footer">
                         <span class="entry-date">${entry.date}</span>
