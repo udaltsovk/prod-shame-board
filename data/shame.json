@@ -254,5 +254,31 @@
     "date": "2026-04-08",
     "evidence": "https://t.me/c/2080029993/204861",
     "added_by": "misshanya"
+  },
+  {
+    "id": 12,
+    "telegram": "@basster284",
+    "description": "Попутал html и swift, но, справедливости ради, опомнился",
+    "quote": [
+      {
+        "from": "kaitostrophe",
+        "text": "https://github.com/subpop/Relay\nRelay - матрикс клиент для макосеров"
+      },
+      {
+        "from": "Basster284",
+        "text": "он на html это всё делал?"
+      },
+      {
+        "from": "Basster284",
+        "text": "позор"
+      },
+      {
+        "from": "Basster284",
+        "text": "перепутать swift с html"
+      }
+    ],
+    "date": "2026-04-08",
+    "evidence": "https://t.me/c/2080029993/205941",
+    "added_by": "misshanya"
   }
 ]
