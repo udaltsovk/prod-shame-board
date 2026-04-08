@@ -2,8 +2,6 @@
 
 > Лучшие высказывания чата, увековеченные навсегда
 
-**Сайт:** [https://watlon.github.io/prod-shame-board](https://watlon.github.io/prod-shame-board)
-
 ## Как добавить запись
 
 [Открой Issue](../../issues/new?template=shame.yml) → вставь цитату из Telegram → готово.
