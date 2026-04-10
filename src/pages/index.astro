@@ -1,6 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import shameData from "../data/shame.json";
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
 
 interface QuoteMessage {
   from: string;
@@ -21,6 +23,8 @@ interface ShameEntry {
 
 const entries: ShameEntry[] = [...shameData].sort((a, b) => b.date.localeCompare(a.date));
 const peopleCount = new Set(entries.map(e => e.telegram)).size;
+
+const avatars = import.meta.glob<{ default: ImageMetadata }>("/public/avatars/*.png");
 
 /* ── яркие цвета для лучшего контраста на темном фоне (#181833) ── */
 const palette = [
@@ -54,9 +58,9 @@ function colorFor(name: string) {
   return palette[hash(name) % palette.length];
 }
 
-function getAvatarUrl(telegram: string) {
+function getAvatarPath(telegram: string) {
   const clean = telegram.replace("@", "");
-  return `/avatars/${clean}.png`;
+  return `/public/avatars/${clean}.png`;
 }
 
 function getLetter(telegram: string) {
@@ -72,13 +76,13 @@ function getLetter(telegram: string) {
     <p class="tagline">Лучшие высказывания чата, увековеченные навсегда</p>
     <div class="header-actions">
       <a
-        href="https://github.com/udaltsovk/prod-shame-board/issues/new?template=shame.yml"
+        href="https://github.com/WatLon/prod-shame-board/issues/new?template=shame.yml"
         target="_blank"
         rel="noopener noreferrer"
         class="btn btn-accent">📛 Номинировать</a
       >
       <a
-        href="https://github.com/udaltsovk/prod-shame-board"
+        href="https://github.com/WatLon/prod-shame-board"
         target="_blank"
         rel="noopener noreferrer"
         class="btn btn-ghost"
@@ -122,14 +126,17 @@ function getLetter(telegram: string) {
         >
           <div class="entry-header">
             <div class="entry-avatar" style={`background: ${colorFor(entry.telegram)}`}>
-              <img
-                src={getAvatarUrl(entry.telegram)}
-                alt=""
-                width="42"
-                height="42"
-                loading="lazy"
-                onerror="this.remove()"
-              />
+              {avatars[getAvatarPath(entry.telegram)] ? (
+                <Image
+                  src={avatars[getAvatarPath(entry.telegram)]()}
+                  alt=""
+                  width={42}
+                  height={42}
+                  loading={i < 3 ? "eager" : "lazy"}
+                  fetchpriority={i === 0 ? "high" : "auto"}
+                  decoding="async"
+                />
+              ) : null}
               {getLetter(entry.telegram)}
             </div>
             <div class="entry-username">
@@ -153,6 +160,7 @@ function getLetter(telegram: string) {
                   src={url}
                   alt="Скриншот-подтверждение"
                   loading="lazy"
+                  decoding="async"
                   width="600"
                   height="400"
                   style="aspect-ratio: auto; width: 100%; height: auto;"
@@ -196,6 +204,7 @@ function getLetter(telegram: string) {
                           src={url}
                           alt={`Изображение от ${msg.from}`}
                           loading="lazy"
+                          decoding="async"
                           width="600"
                           height="400"
                           style="aspect-ratio: auto; width: 100%; height: auto;"
