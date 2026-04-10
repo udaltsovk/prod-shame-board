@@ -322,5 +322,24 @@
     "date": "2026-04-10",
     "evidence": "https://t.me/c/2080029993/210943",
     "added_by": "misshanya"
+  },
+  {
+    "id": 14,
+    "telegram": "@dev_cry1337",
+    "description": "Слил скриншот с паролем от тачки, но вовремя одумался",
+    "quote": [
+      {
+        "from": "привет",
+        "text": "ПРЕЛЕСТЬ СУКА",
+        "image": "https://github.com/user-attachments/assets/62b6cf1e-c614-4ad5-b7c2-a198afd7c2af"
+      },
+      {
+        "from": "привет",
+        "text": "Блять."
+      }
+    ],
+    "date": "2026-04-10",
+    "evidence": "https://t.me/c/2080029993/210971",
+    "added_by": "misshanya"
   }
 ]
