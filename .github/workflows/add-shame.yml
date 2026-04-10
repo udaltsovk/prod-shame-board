@@ -197,13 +197,14 @@ jobs:
             // ── аватарка ──
             const clean = telegram.replace(/^@/, '');
             const avatarDir = 'avatars';
-            const avatarPath = `${avatarDir}/${clean}.jpg`;
+            const avatarPathJpg = `${avatarDir}/${clean}.jpg`;
+            const avatarPathWebp = `${avatarDir}/${clean}.webp`;
 
             if (!fs.existsSync(avatarDir)) {
               fs.mkdirSync(avatarDir, { recursive: true });
             }
 
-            if (!fs.existsSync(avatarPath)) {
+            if (!fs.existsSync(avatarPathJpg) && !fs.existsSync(avatarPathWebp)) {
               try {
                 core.info(`Fetching avatar for @${clean}...`);
                 const page = await fetch(`https://t.me/${clean}`, {
@@ -221,8 +222,8 @@ jobs:
                   if (imgRes.ok) {
                     const buf = Buffer.from(await imgRes.arrayBuffer());
                     if (buf.length > 1000) {
-                      fs.writeFileSync(avatarPath, buf);
-                      core.info(`Avatar saved: ${avatarPath} (${buf.length} bytes)`);
+                      fs.writeFileSync(avatarPathJpg, buf);
+                      core.info(`Avatar saved: ${avatarPathJpg} (${buf.length} bytes)`);
                     } else {
                       core.info('Avatar too small, likely a placeholder — skipping');
                     }
@@ -263,6 +264,9 @@ jobs:
             core.exportVariable('SHAME_PREVIEW', preview.substring(0, 50));
             core.exportVariable('ISSUE_NUM', String(context.payload.issue.number));
 
+      - name: Install webp tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq webp
+
       - name: Convert avatars to webp
         run: |
           set -euo pipefail
@@ -279,7 +283,7 @@ jobs:
               fi
 
               echo "Converting: $f -> $out"
-              magick "$f" "$out"
+              cwebp "$f" -o "$out"
               rm "$f"
             done
           else
