@@ -56,8 +56,9 @@ function colorFor(name: string) {
 
 function getAvatarUrl(telegram: string) {
   const clean = telegram.replace("@", "");
-  return `/avatars/${clean}.png`;
+  return `${import.meta.env.BASE_URL}avatars/${clean}.png`;
 }
+
 
 function getLetter(telegram: string) {
   const clean = telegram.replace("@", "");
